@@ -1,54 +1,49 @@
-import { expect, test, vi } from 'vitest'
+import { expect, test, vi, beforeEach } from 'vitest'
+import type { HttpFunction } from '@google-cloud/functions-framework';
 
-process.env.DATABASE_URL = 'postgresql://kevin@localhost:5432/http_sql_test';
-process.env.API_KEY = 'test-api-key';
+let httpSql: HttpFunction;
+
+beforeEach(async () => {
+  process.env.DATABASE_URL = 'postgresql://kevin@localhost:5432/http_sql_test';
+  process.env.API_KEY = 'test-api-key';
+
+  // dynamically import to ensure env vars are loaded first
+  const module = await import('./index.js');
+  httpSql = module.httpSql;
+});
+
+const mockRequest = () => ({
+  body: {
+    sql: 'SELECT 1 as num, \'hello\' as greeting',
+    params: [],
+    method: 'all',
+  },
+  headers: {
+    authorization: 'Bearer test-api-key',
+  },
+});
+
+const mockResponse = () => ({
+  status: vi.fn().mockReturnThis(),
+  json: vi.fn(),
+  send: vi.fn(),
+});
 
 test('should execute SQL and return rows', async () => {
-  // dynamically import to ensure env vars are loaded first
-  const { httpSql } = await import('./index.js');
-  const req = {
-    body: {
-      sql: 'SELECT 1 as num, \'hello\' as greeting',
-      params: [],
-      method: 'all',
-    },
-    headers: {
-      authorization: 'Bearer test-api-key',
-    },
-  };
+  const request = mockRequest();
+  const response = mockResponse();
 
-  const res = {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn(),
-    send: vi.fn(),
-  };
+  await httpSql(request as any, response as any);
 
-  await httpSql(req as any, res as any);
-
-  expect(res.send).toHaveBeenCalledWith([[1, 'hello']]);
+  expect(response.send).toHaveBeenCalledWith([[1, 'hello']]);
 });
 
 test('return a 401 if unauthorized', async () => {
-  // dynamically import to ensure env vars are loaded first
-  const { httpSql } = await import('./index.js');
-  const req = {
-    body: {
-      sql: 'SELECT 1 as num, \'hello\' as greeting',
-      params: [],
-      method: 'all',
-    },
-    headers: {
-      authorization: 'Bearer wrong-api-key',
-    },
-  };
+  const request = mockRequest();
+  request.headers.authorization = 'Bearer wrong-api-key';
+  const response = mockResponse();
 
-  const res = {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn(),
-    send: vi.fn(),
-  };
+  await httpSql(request as any, response as any);
 
-  await httpSql(req as any, res as any);
-
-  expect(res.status).toHaveBeenCalledWith(401);
+  expect(response.status).toHaveBeenCalledWith(401);
 });
