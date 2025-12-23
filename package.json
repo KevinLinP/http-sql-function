@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "functions-framework --target=helloWorld --source=dist"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}
+
