@@ -23,10 +23,8 @@ export const httpSql: HttpFunction = async (req, res) => {
       ...(method === 'all' && { rowMode: 'array' }),
     });
 
-    res.send(result.rows);
+    return res.send(result.rows);
   } catch (e: any) {
-    res.status(500).json({ error: e });
+    return res.status(500).json({ error: e });
   }
-
-  res.status(500).json({ error: 'Unknown method value' });
 };
