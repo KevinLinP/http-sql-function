@@ -3,14 +3,15 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "functions-framework --target=helloWorld --source=dist"
+    "start": "functions-framework --target=httpSql --source=dist"
   },
   "dependencies": {
-    "@google-cloud/functions-framework": "^4.0.1"
+    "@google-cloud/functions-framework": "^4.0.1",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.16.0",
     "typescript": "^5.9.3"
   }
 }
-
