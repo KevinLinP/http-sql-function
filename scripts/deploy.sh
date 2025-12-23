@@ -1,0 +1,1 @@
+gcloud functions deploy http-sql --entry-point=helloWorld --gen2 --region=us-central1 --runtime=nodejs24 --trigger-http --allow-unauthenticated
