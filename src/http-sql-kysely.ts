@@ -22,8 +22,8 @@ const kysely = new Kysely({
   }),
 });
 
-export const httpSql: HttpFunction = async (req, res) => {
-  if (req.headers.authorization !== `Bearer ${process.env.API_KEY}`) {
+export const httpSqlKysely: HttpFunction = async (req, res) => {
+  if (!process.env.API_KEY || req.headers.authorization !== `Bearer ${process.env.API_KEY}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -37,6 +37,7 @@ export const httpSql: HttpFunction = async (req, res) => {
     const result = await kysely.executeQuery(compiledQuery);
     return res.send(serialize(result));
   } catch (e: any) {
+    console.error(e);
     return res.status(500).json({ error: e });
   }
 };

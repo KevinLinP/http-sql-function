@@ -3,7 +3,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "functions-framework --target=httpSql --source=dist"
+    "run-local": "functions-framework --target=httpSql --source=dist",
+    "run-kysely-local": "functions-framework --target=httpSqlKysely --source=dist"
   },
   "dependencies": {
     "@google-cloud/functions-framework": "^4.0.1",
