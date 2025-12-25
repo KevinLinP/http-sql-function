@@ -1,26 +1,38 @@
 import { Kysely, type Generated } from "kysely";
 import { FetchDriver } from "./kysely-test/fetch-driver.js";
 import { PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler } from "kysely";
-import { Binary, EJSON } from 'bson';
+import superjson, { type SuperJSONResult } from 'superjson';
 import { expect, test } from 'vitest'
 
 interface KyselyTestsTable {
   id: Generated<string>
-  binary_array: Binary[]
+  binary_array: Uint8Array[]
 }
 
 interface Database {
   kysely_tests: KyselyTestsTable
 }
 
+superjson.registerCustom<Uint8Array, string>(
+  {
+    isApplicable: (v): v is Uint8Array => v instanceof Uint8Array,
+    deserialize: v => Uint8Array.from(atob(v), c => c.charCodeAt(0)),
+    serialize: v => btoa(String.fromCharCode(...v)),
+  },
+  'binary'
+);
+
 const transformer = {
   serialize: (value: any): string => {
-    const serialized = EJSON.serialize(value);
-    return JSON.stringify(serialized);
+    const output = superjson.stringify(value);
+    console.log({output});
+    return output;
   },
   deserialize: (str: string): any => {
-    const parsed = JSON.parse(str);
-    return EJSON.deserialize(parsed);
+    console.log({str});
+    const parsed = superjson.parse(str);
+    console.log({parsed});
+    return parsed;
   },
 };
 
@@ -47,7 +59,7 @@ const dbFetch = () => {
 
 test('should insert and select binary data', async () => {
   const result = await dbFetch().insertInto("kysely_tests").values({
-    binary_array: [new Binary(new Uint8Array([1, 2, 3])), new Binary(new Uint8Array([4, 5, 6]))],
+    binary_array: [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])],
   }).returning('id').executeTakeFirst();
 
   const id = result?.id;
@@ -64,6 +76,6 @@ test('should insert and select binary data', async () => {
 
   console.log({examples});
 
-  expect(examples[0]?.binary_array).toEqual([new Binary(new Uint8Array([1, 2, 3])), new Binary(new Uint8Array([4, 5, 6]))]);
+  expect(examples[0]?.binary_array).toEqual([new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])]);
   }
 );

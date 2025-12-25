@@ -64,21 +64,34 @@ class FetchConnection implements DatabaseConnection {
   }
 
   async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
-    const q = this.config.transformer.serialize({
+    const body = this.config.transformer.serialize({
       sql: compiledQuery.sql,
       parameters: compiledQuery.parameters,
     });
 
-    const url = `${this.config.url}?q=${q}`;
-    const res = await fetch(url, this.config.init);
+    console.log({body});
+
+    const url = this.config.url;
+    const res = await fetch(url, {
+      ...this.config.init,
+      method: 'POST',
+      body,
+      headers: {
+        'Content-Type': 'text/plain',
+        ...this.config.init?.headers,
+      },
+    });
 
     if (res.ok) {
       try {
+        const text = await res.text();
+        console.log({text});
         const result = this.config.transformer.deserialize(
-          await res.text()
+          text
         ) as QueryResult<R>;
         return result;
       } catch (error) {
+        console.log({error});
         throw new Error("failed to parse response");
       }
     } else {
