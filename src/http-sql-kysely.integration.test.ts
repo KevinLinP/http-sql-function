@@ -1,7 +1,7 @@
 import { Kysely, type Generated } from "kysely";
-import { FetchDriver } from "./kysely-test/fetch-driver.js";
+import { FetchDriver } from "./kysely-test/fetch-driver-modified.js";
 import { PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler } from "kysely";
-import superjson, { type SuperJSONResult } from 'superjson';
+import superjson from 'superjson';
 import { expect, test } from 'vitest'
 
 interface KyselyTestsTable {
@@ -16,23 +16,25 @@ interface Database {
 superjson.registerCustom<Uint8Array, string>(
   {
     isApplicable: (v): v is Uint8Array => v instanceof Uint8Array,
-    deserialize: v => Uint8Array.from(atob(v), c => c.charCodeAt(0)),
-    serialize: v => btoa(String.fromCharCode(...v)),
+    deserialize: (string: string): Uint8Array => Uint8Array.from(atob(string), c => c.charCodeAt(0)),
+    serialize: (array: Uint8Array): string => {
+      // Build binary string in chunks to avoid call stack issues with large arrays
+      let binaryString = '';
+      for (let i = 0; i < array.length; i++) {
+        binaryString += String.fromCharCode(array[i]!);
+      }
+      return btoa(binaryString);
+    },
   },
   'binary'
 );
 
 const transformer = {
   serialize: (value: any): string => {
-    const output = superjson.stringify(value);
-    console.log({output});
-    return output;
+    return superjson.stringify(value);
   },
   deserialize: (str: string): any => {
-    console.log({str});
-    const parsed = superjson.parse(str);
-    console.log({parsed});
-    return parsed;
+    return superjson.parse(str);
   },
 };
 
@@ -47,8 +49,10 @@ const dbFetch = () => {
           transformer,
           url: "http://localhost:8080/",
           init: {
+            method: 'POST',
             headers: {
               Authorization: `Bearer test-api-key`,
+              'Content-Type': 'text/plain',
             },
           },
         });
@@ -67,15 +71,11 @@ test('should insert and select binary data', async () => {
     throw new Error('Id is undefined');
   }
 
-  //use kysely query builder as normal
   const examples = await dbFetch()
     .selectFrom("kysely_tests")
     .selectAll()
     .where('id', '=', id)
     .execute();
 
-  console.log({examples});
-
   expect(examples[0]?.binary_array).toEqual([new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])]);
-  }
-);
+});
