@@ -1,12 +1,12 @@
 import { Kysely, type Generated } from "kysely";
 import { FetchDriver } from "./kysely-test/fetch-driver.js";
 import { PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler } from "kysely";
-import { EJSON } from 'bson';
+import { Binary, EJSON } from 'bson';
 import { expect, test } from 'vitest'
 
 interface KyselyTestsTable {
   id: Generated<string>
-  binary_array: Uint8Array[]
+  binary_array: Binary[]
 }
 
 interface Database {
@@ -47,7 +47,7 @@ const dbFetch = () => {
 
 test('should insert and select binary data', async () => {
   const result = await dbFetch().insertInto("kysely_tests").values({
-    binary_array: [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])],
+    binary_array: [new Binary(new Uint8Array([1, 2, 3])), new Binary(new Uint8Array([4, 5, 6]))],
   }).returning('id').executeTakeFirst();
 
   const id = result?.id;
@@ -64,6 +64,6 @@ test('should insert and select binary data', async () => {
 
   console.log({examples});
 
-  expect(examples[0]?.binary_array).toEqual([new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])]);
+  expect(examples[0]?.binary_array).toEqual([new Binary(new Uint8Array([1, 2, 3])), new Binary(new Uint8Array([4, 5, 6]))]);
   }
 );

@@ -30,14 +30,3 @@ const dbFetch = new Kysely<Database>({
     createDriver: () => new DummyDriver()
   },
 });
-
-test('EJSON should serialize and deserialize binary data', async () => {
-  const binaryData = new Binary(Buffer.from('world', 'utf-8'));
-  const obj = {hello: binaryData};
-  const serialized = EJSON.serialize(obj);
-  const serializedString = JSON.stringify(serialized);
-
-  const parsed = JSON.parse(serializedString);
-  const deserialized = EJSON.deserialize(parsed);
-  expect(deserialized).toEqual(obj);
-});
